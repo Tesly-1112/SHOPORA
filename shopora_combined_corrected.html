@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shopora</title>
+<style>
+:root{--ink:#172033;--muted:#697386;--brand:#5b45d6;--bg:#f5f6fb;--line:#e6e8f0}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#fff;border-bottom:1px solid var(--line);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-size:23px;font-weight:800;color:var(--brand)}.tag{font-size:12px;color:var(--muted)}
+main{max-width:920px;margin:28px auto;padding:0 16px}.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 8px 28px #1720330a}
+h1{font-size:26px;margin:0 0 8px}h2{font-size:20px;margin:0 0 14px}p{color:var(--muted);line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:22px 0}
+.product{border:1px solid var(--line);border-radius:14px;padding:16px}.product strong{display:block;font-size:18px;margin-bottom:7px}.price{font-size:20px;font-weight:800;color:var(--brand)}
+label{display:block;font-weight:700;font-size:13px;margin:14px 0 7px}input,select{width:100%;padding:13px;border:1px solid #d9dce7;border-radius:10px;font-size:16px;background:#fff}
+button{border:0;border-radius:10px;padding:13px 17px;font-size:15px;font-weight:700;cursor:pointer;background:var(--brand);color:#fff}
+button.secondary{background:#eef0f7;color:var(--ink)}button.danger{background:#b42318}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.hidden{display:none!important}.notice{background:#fff8e6;border:1px solid #f4df9c;color:#765500;padding:12px;border-radius:10px;font-size:13px;line-height:1.45;margin-top:16px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}.tabs button{background:#eef0f7;color:#273047}.tabs button.active{background:var(--brand);color:#fff}
+.order{border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0}.order small{color:var(--muted)}.status{font-weight:700;color:#8a5a00}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:28px 14px}
+@media(max-width:520px){header{padding:14px}.panel{padding:17px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<header><div><div class="logo">Shopora</div><div class="tag">Your store, made simple</div></div><button class="secondary" id="adminOpen">Admin</button></header>
+<main>
+<section id="store" class="panel">
+<h1>Welcome to Shopora</h1>
+<p>Choose a package and submit your order.</p>
+<div class="grid">
+ <div class="product"><strong>100B LLC</strong><div class="price">₦1,500</div></div>
+ <div class="product"><strong>300B LLC</strong><div class="price">₦3,000</div></div>
+ <div class="product"><strong>500B LLC</strong><div class="price">₦4,000</div></div>
+ <div class="product"><strong>1T LLC</strong><div class="price">₦7,000</div></div>
+</div>
+<form id="orderForm">
+<label for="username">Your username</label><input id="username" required maxlength="60" placeholder="Enter your username">
+<label for="package">Choose package</label><select id="package" required><option value="">Select a package</option><option value="100B LLC" data-price="1500">100B LLC — ₦1,500</option><option value="300B LLC" data-price="3000">300B LLC — ₦3,000</option><option value="500B LLC" data-price="4000">500B LLC — ₦4,000</option><option value="1T LLC" data-price="7000">1T LLC — ₦7,000</option></select>
+<button type="button" class="secondary" id="promoReveal" style="margin-top:14px">Have a promo code?</button>
+<div id="promoArea" class="hidden">
+<label for="promoCode">Enter promo code (optional)</label>
+<div class="actions" style="margin-top:0"><input id="promoCode" placeholder="Enter promo code" maxlength="30" style="flex:1;min-width:150px"><button type="button" class="secondary" id="applyPromo">Apply</button></div>
+<p id="promoFeedback" aria-live="polite" style="margin:8px 0"></p>
+</div>
+<p id="priceSummary" style="font-weight:700;color:#172033">Total: Select a package</p>
+<div class="actions"><button type="button" id="payNowBtn">Pay Now</button><button type="submit" class="secondary">Submit order</button></div>
+<div id="paymentPanel" class="order hidden">
+ <h2>Payment details</h2>
+ <p>Payment method: OPay</p>
+ <p><strong>Account number:</strong> 9035624225</p>
+ <p>After making payment, tap the button below.</p>
+ <button type="button" id="ivePaidBtn">I've Paid</button>
+</div>
+</form>
+<div id="orderMsg" class="notice hidden" role="status"></div>
+
+</section>
+
+<section id="login" class="panel hidden">
+<h2>Admin sign in</h2><p>Admin access is separate from the customer ordering screen.</p>
+<form id="loginForm"><label for="password">Admin password</label><input id="password" type="password" required autocomplete="current-password"><div class="actions"><button type="submit">Sign in</button><button type="button" class="secondary" id="backStore">Back to store</button></div></form>
+<div id="loginMsg" class="notice hidden"></div>
+<div class="notice">First-time setup: the password you create here is stored in this browser only. This is not secure authentication for a public website.</div>
+</section>
+
+<section id="admin" class="panel hidden">
+<div class="tabs"><button class="active" id="ordersTab">Orders</button><button id="promoTab">Promo codes</button><button id="settingsTab">Password settings</button></div>
+<div id="ordersView"><h2>Orders</h2><p>Orders submitted from this same browser appear below.</p><div id="ordersList"></div><div class="actions"><button class="secondary" id="exportBtn">Export orders</button><button class="danger" id="logoutBtn">Log out</button></div></div>
+<div id="promoView" class="hidden"><h2>Promo codes</h2>
+<p>Create codes for customers. Set the discount and the date it expires.</p>
+<form id="promoCreateForm">
+<label for="newPromoCode">Promo code</label><input id="newPromoCode" required maxlength="30" placeholder="e.g. SPECIAL500">
+<label for="newPromoDiscount">Discount amount (₦)</label><input id="newPromoDiscount" type="number" min="1" step="1" required placeholder="e.g. 500">
+<label for="newPromoExpiry">Expiry date</label><input id="newPromoExpiry" type="date" required>
+<div class="actions"><button type="submit">Create promo code</button></div>
+</form>
+<div id="promoAdminMsg" class="notice hidden" aria-live="polite"></div>
+<h2 style="margin-top:24px">Your promo codes</h2><div id="promoList"></div>
+</div>
+<div id="settingsView" class="hidden"><h2>Change admin password</h2><form id="changeForm"><label for="newPassword">New password (at least 8 characters)</label><input id="newPassword" type="password" minlength="8" required><div class="actions"><button type="submit">Save password</button><button type="button" class="secondary" id="settingsLogout">Log out</button></div></form><div id="settingsMsg" class="notice hidden"></div></div>
+</section>
+</main>
+<footer>Shopora · Customer ordering and admin access are shown separately.</footer>
+<script>
+const $=id=>document.getElementById(id);
+const show=id=>{['store','login','admin'].forEach(x=>$(x).classList.add('hidden'));$(id).classList.remove('hidden')};
+const getOrders=()=>JSON.parse(localStorage.getItem('shopora_orders')||'[]');
+const setOrders=x=>localStorage.setItem('shopora_orders',JSON.stringify(x));
+function renderOrders(){
+ const list=$('ordersList'),orders=getOrders();list.innerHTML='';
+ if(!orders.length){list.innerHTML='<p>No orders yet.</p>';return}
+ orders.forEach((o,index)=>{
+  const d=document.createElement('div');d.className='order';
+  const title=document.createElement('strong');title.textContent=o.package;
+  const detail=document.createElement('small');detail.textContent='Username: '+o.username+' · '+o.date;
+  const payment=document.createElement('div');payment.className='status';payment.textContent='Payment: '+(o.paymentStatus||'Pending');
+  const fulfil=document.createElement('div');fulfil.className='status';fulfil.textContent='Order: '+(o.fulfilmentStatus||'Not sent');
+  const controls=document.createElement('div');controls.className='actions';
+  const confirm=document.createElement('button');confirm.type='button';confirm.textContent='Confirm Payment';confirm.className='secondary';
+  confirm.onclick=()=>{const all=getOrders();all[index].paymentStatus='Payment confirmed';setOrders(all);renderOrders()};
+  const sent=document.createElement('button');sent.type='button';sent.textContent='Mark as Sent';
+  sent.onclick=()=>{const all=getOrders();all[index].fulfilmentStatus='Sent';setOrders(all);renderOrders()};
+  controls.append(confirm,sent);d.append(title,document.createElement('br'),detail,payment,fulfil,controls);list.append(d);
+ });
+}
+$('adminOpen').onclick=()=>{if(sessionStorage.getItem('shopora_admin')==='yes'){renderOrders();show('admin')}else show('login')};
+$('backStore').onclick=()=>show('store');
+let appliedPromo=null;
+const prices={'100B LLC':1500,'300B LLC':3000,'500B LLC':4000,'1T LLC':7000};
+const getPromos=()=>JSON.parse(localStorage.getItem('shopora_promos')||'[]');
+const savePromos=x=>localStorage.setItem('shopora_promos',JSON.stringify(x));
+function updatePrice(){
+ const pkg=$('package').value,base=prices[pkg];
+ if(!base){$('priceSummary').textContent='Total: Select a package';return}
+ const discount=appliedPromo?Math.min(base,appliedPromo.discount):0;
+ $('priceSummary').textContent='Subtotal: ₦'+base.toLocaleString('en-NG')+' · Discount: ₦'+discount.toLocaleString('en-NG')+' · Total: ₦'+(base-discount).toLocaleString('en-NG');
+}
+$('promoReveal').onclick=()=>{$('promoArea').classList.toggle('hidden')};
+$('package').onchange=()=>{appliedPromo=null;$('promoFeedback').textContent='';updatePrice()};
+$('applyPromo').onclick=()=>{
+ const code=$('promoCode').value.trim().toUpperCase();
+ const promo=getPromos().find(p=>p.code===code);
+ if(!code){$('promoFeedback').textContent='Enter a promo code first.';appliedPromo=null}
+ else if(!promo||!promo.active){$('promoFeedback').textContent='This promo code is invalid or inactive.';appliedPromo=null}
+ else if(promo.expiry < new Date().toISOString().slice(0,10)){$('promoFeedback').textContent='This promo code has expired.';appliedPromo=null}
+ else {appliedPromo=promo;$('promoFeedback').textContent='Promo applied: ₦'+promo.discount.toLocaleString('en-NG')+' off.'}
+ updatePrice();
+};
+let currentOrderIndex=null;
+$('payNowBtn').onclick=()=>{
+ if(!$('username').value.trim()||!$('package').value){$('orderMsg').textContent='Enter your username and choose a package first.';$('orderMsg').classList.remove('hidden');return}
+ $('paymentPanel').classList.remove('hidden');
+};
+$('ivePaidBtn').onclick=()=>{
+ const pkg=$('package').value,base=prices[pkg],discount=appliedPromo?Math.min(base,appliedPromo.discount):0;
+ const orders=getOrders();
+ orders.push({username:$('username').value.trim(),package:pkg,promo:appliedPromo?appliedPromo.code:'',subtotal:base,discount,total:base-discount,date:new Date().toLocaleString(),paymentStatus:'Payment submitted',fulfilmentStatus:'Not sent'});
+ setOrders(orders);currentOrderIndex=orders.length-1;
+ $('orderMsg').textContent='Payment submitted. Your order is awaiting admin confirmation.';
+ $('orderMsg').classList.remove('hidden');$('paymentPanel').classList.add('hidden');
+ $('orderForm').reset();appliedPromo=null;$('promoArea').classList.add('hidden');$('promoFeedback').textContent='';updatePrice();
+};
+$('orderForm').onsubmit=e=>{
+ e.preventDefault();
+ $('orderMsg').textContent='Tap Pay Now to view the payment instructions, then tap I\'ve Paid after completing payment.';
+ $('orderMsg').classList.remove('hidden');
+};
+function renderPromos(){
+ const list=$('promoList'),promos=getPromos();list.innerHTML='';
+ if(!promos.length){list.innerHTML='<p>No promo codes created yet.</p>';return}
+ promos.forEach((p,i)=>{
+  const expired=p.expiry<new Date().toISOString().slice(0,10);
+  const item=document.createElement('div');item.className='order';
+  const title=document.createElement('strong');title.textContent=p.code+' — ₦'+Number(p.discount).toLocaleString('en-NG')+' off';
+  const detail=document.createElement('small');detail.textContent='Expires: '+p.expiry+' · '+(expired?'Expired':p.active?'Active':'Inactive');
+  const controls=document.createElement('div');controls.className='actions';
+  const toggle=document.createElement('button');toggle.type='button';toggle.className='secondary';toggle.textContent=p.active?'Deactivate':'Activate';
+  toggle.onclick=()=>{const all=getPromos();all[i].active=!all[i].active;savePromos(all);renderPromos()};
+  const del=document.createElement('button');del.type='button';del.className='danger';del.textContent='Delete';
+  del.onclick=()=>{savePromos(getPromos().filter((_,n)=>n!==i));renderPromos()};
+  controls.append(toggle,del);item.append(title,document.createElement('br'),detail,controls);list.append(item);
+ });
+}
+$('promoCreateForm').onsubmit=e=>{
+ e.preventDefault();
+ const code=$('newPromoCode').value.trim().toUpperCase(),discount=Number($('newPromoDiscount').value),expiry=$('newPromoExpiry').value;
+ const promos=getPromos();
+ if(promos.some(p=>p.code===code)){$('promoAdminMsg').textContent='That promo code already exists.';$('promoAdminMsg').classList.remove('hidden');return}
+ if(!code||!Number.isFinite(discount)||discount<1||!expiry){return}
+ promos.push({code,discount,expiry,active:true});savePromos(promos);
+ $('promoAdminMsg').textContent='Promo code created and activated.';$('promoAdminMsg').classList.remove('hidden');
+ $('promoCreateForm').reset();renderPromos();
+};
+$('loginForm').onsubmit=e=>{e.preventDefault();const entered=$('password').value;let saved=localStorage.getItem('shopora_admin_password');if(!saved){if(entered.length<8){$('loginMsg').textContent='Choose a password with at least 8 characters.';$('loginMsg').classList.remove('hidden');return}localStorage.setItem('shopora_admin_password',entered);saved=entered}if(entered===saved){sessionStorage.setItem('shopora_admin','yes');$('loginMsg').classList.add('hidden');renderOrders();show('admin')}else{$('loginMsg').textContent='Incorrect password.';$('loginMsg').classList.remove('hidden')}};
+$('logoutBtn').onclick=$('settingsLogout').onclick=()=>{sessionStorage.removeItem('shopora_admin');show('store')};
+function setAdminTab(tab){['ordersView','promoView','settingsView'].forEach(id=>$(id).classList.add('hidden'));['ordersTab','promoTab','settingsTab'].forEach(id=>$(id).classList.remove('active'));$(tab+'View').classList.remove('hidden');$(tab+'Tab').classList.add('active');if(tab==='orders')renderOrders();if(tab==='promo')renderPromos()}
+$('ordersTab').onclick=()=>setAdminTab('orders');
+$('promoTab').onclick=()=>setAdminTab('promo');
+$('settingsTab').onclick=()=>setAdminTab('settings');
+$('changeForm').onsubmit=e=>{e.preventDefault();localStorage.setItem('shopora_admin_password',$('newPassword').value);$('settingsMsg').textContent='Password updated in this browser.';$('settingsMsg').classList.remove('hidden');$('changeForm').reset()};
+$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify(getOrders(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='shopora-orders.json';a.click();URL.revokeObjectURL(url)};
+</script>
+</body></html>
